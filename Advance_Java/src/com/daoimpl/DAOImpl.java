@@ -4,156 +4,127 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 
-import com.aspect.DBUtility;
-import com.bean.Employee;
+import com.aspect.ConnectionFactory;
+import com.bean.User;
 import com.dao.DAOInterface;
 
 public class DAOImpl implements DAOInterface {
-	Connection con = null;
-	PreparedStatement pst = null;
-	ResultSet rs = null;
-	int id;
-	String name;
-	double salary;
-	
 
-	// Insert data into DB
-	@Override
-	public void insertData(Employee e) {
-		con = DBUtility.getDBConnection();
+	Connection con = ConnectionFactory.getDbConnection();
+	PreparedStatement pst;
+	ResultSet rs;
+
+	public void insertData(User u) {
+		// Fired insert query with object data into DB
 		try {
-			pst = con.prepareStatement("INSERT INTO EMPLOYEES(empId, empName, salary) VALUES (?,?,?)");
-			pst.setInt(1, e.geteId());
-			pst.setString(2, e.geteName());
-			pst.setDouble(3, e.getSalary());
-
+			pst = con.prepareStatement("INSERT INTO users (username, password) values (?,?)");
+			pst.setString(1, u.getUserName());
+			pst.setString(2, u.getPassword());
 			pst.executeUpdate();
-		} catch (SQLException e1) {
 
-			e1.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 
-		// Release Resources
-		DBUtility.resourceRelease(rs, pst, con);
-
 	}
 
 	@Override
-	public Employee getdata(int id) {
+	public boolean getData(User u) {
 
-		Employee emp=null;
-			try {
-				con=DBUtility.getDBConnection();
-				pst = con.prepareStatement("select * from employees where empId=?");
-				pst.setInt(1, id);
-				rs = pst.executeQuery();
-				
-				if(rs.next()) {
-					id = rs.getInt(1);
-					name = rs.getString(2);
-					salary = rs.getDouble(3);
-				 emp= new Employee(id, name, salary);
-				}
-				return emp;
-				
-
-			} catch (SQLException e) {
-
-				e.printStackTrace();
-			} finally {
-				DBUtility.resourceRelease(rs, pst, con);
-			}
-
-		
-
-		return null;
-	}
-
-	@Override
-	public boolean updateEmp(int id, double salary) {
-		
-			try {
-				con=DBUtility.getDBConnection();
-				pst = con.prepareStatement("UPDATE Employees SET salary = ? WHERE empId = ?");
-				pst.setDouble(1, salary);
-				pst.setInt(2, id);
-				return pst.executeUpdate() > 0;
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} finally {
-				DBUtility.resourceRelease(rs, pst, con);
-			}
-
-		
-
-		return false;
-	}
-
-//	@Override
-//	public boolean isempexists(int id) {
-//		con = DBUtility.getDBConnection();
-//		try {
-//			pst = con.prepareStatement("select * from employees where empId=?");
-//			pst.setInt(1, id);
-//			pst.executeQuery();
-//			return true;
-//		} catch (SQLException e) {
-//
-//			e.printStackTrace();
-//		} finally {
-//			// close resources in reverse order
-//			DBUtility.resourceRelease(rs, pst, con);
-//		}
-//		return false;
-//	}
-
-	@Override
-	public boolean deleteEmp(int id) {
-
-		
-			try {
-				con=DBUtility.getDBConnection();
-				pst = con.prepareStatement("delete from employees where empId=?");
-				pst.setInt(1, id);
-				return pst.executeUpdate() > 0;
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}finally {
-				DBUtility.resourceRelease(rs, pst, con);
-			}
-		
-
-		return false;
-	}
-
-	@Override
-	public ArrayList<Employee> display() {
-		ArrayList<Employee> emplist = new ArrayList<Employee>();
-		con = DBUtility.getDBConnection();
 		try {
-			pst = con.prepareStatement("Select * from Employees");
+			pst = con.prepareStatement("select * from users where username=? AND password=?");
+			pst.setString(1, u.getUserName());
+			pst.setString(2, u.getPassword());
+
 			rs = pst.executeQuery();
-			while (rs.next()) {
-				id = rs.getInt(1);
-				name = rs.getString(2);
-				salary = rs.getDouble(3);
-				
-				Employee emp = new Employee(id, name, salary);
-				emplist.add(emp);
-			}
-			return emplist;
+
+			return rs.next();
 
 		} catch (SQLException e) {
-			e.printStackTrace();
-		} finally {
-			DBUtility.resourceRelease(rs, pst, con);
-		}
-		return null;
 
+			e.printStackTrace();
+		}
+
+		return false;
+	}
+
+	@Override
+	public boolean isUserExists(String username) {
+		
+		try {
+			pst = con.prepareStatement("select * from users where username=?");
+			pst.setString(1, username);
+			
+
+			rs = pst.executeQuery();
+
+			return rs.next();
+
+		} catch (SQLException e) {
+
+			e.printStackTrace();
+		}
+
+		return false;
+	}
+
+	
+
+	@Override
+	public boolean updatePassword(User u, String password) {
+		boolean status=false;
+		
+		       try {
+				pst=con.prepareStatement("UPDATE users SET password=? WHERE username=? AND password=?");
+				
+				pst.setString(1, password);
+				pst.setString(2, u.getUserName());
+				pst.setString(3, u.getPassword());
+				
+				 status = pst.executeUpdate() > 0;
+				
+			   } catch (SQLException e) {
+			
+				e.printStackTrace();
+			   }
+		return status;
+	}
+
+	@Override
+	public boolean forgotPassword(String username, String newPassword) {
+		boolean status=false;
+		     try {
+				pst=con.prepareStatement("UPDATE users SET password=? WHERE username=?");
+				pst.setString(1, newPassword);
+				pst.setString(2, username);
+		    status=pst.executeUpdate()>0;
+				
+			 }
+		     catch (SQLException e)
+		     {
+			    
+				e.printStackTrace();
+			 }
+		return status;
+	}
+
+	@Override
+	public boolean deleteData(String user) {
+		boolean status=false;
+		
+		try {
+			pst=con.prepareStatement("DELETE FROM users WHERE TRIM(LOWER(username)) = LOWER(?)");
+			pst.setString(1, user);
+			status=pst.executeUpdate()>0;
+			
+		} 
+		catch (SQLException e) 
+		{
+			
+			e.printStackTrace();
+		}
+		return status;
 	}
 
 }

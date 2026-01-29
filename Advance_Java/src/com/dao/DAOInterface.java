@@ -1,20 +1,13 @@
 package com.dao;
 
-import java.util.ArrayList;
-
-import com.bean.Employee;
+import com.bean.User;
 
 public interface DAOInterface {
-	public void insertData(Employee e);
-
-	public Employee getdata(int id);
-
-	public boolean updateEmp(int id,double salary);
-
-//	public boolean isempexists(int id);
-
-	public boolean deleteEmp(int id);
-
-	public ArrayList<Employee> display();
+	public void insertData(User u);
+	public boolean getData(User u);
+	public boolean isUserExists(String username);
+	public boolean updatePassword(User u,String password);
+	public boolean forgotPassword(String username,String newPassword);
+	public boolean deleteData(String user);
 
 }
